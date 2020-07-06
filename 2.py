@@ -3,7 +3,6 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspo
 import numpy as np
 import matplotlib.pyplot as plt
 # from IPython.display import clear_output
-# from tensorflow_examples.models.pix2pix import pix2pix
 import os
 from PIL import Image
 from tqdm import tqdm
@@ -52,6 +51,7 @@ for filename in tqdm(clean_dir_filename):
 		clean_array_20.append(np.asarray(image_c))
 		binary_array_20.append(np.asarray(image_b)[:, :, 0])
 		dirty_array_20.append(np.asarray(image_d))
+# todo add 1 channel if required
 
 clean_array_80 = np.array(clean_array_80) / 255
 binary_array_80 = np.array(binary_array_80) / 255
@@ -87,7 +87,8 @@ def display(display_list):
 
 
 def build_model(input_layer, start_neurons):
-	conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(input_layer)
+	pad = tf.pad(input_layer, [[0, 0], [2, 2], [4, 4], [0, 0]], "CONSTANT")
+	conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(pad)
 	conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
 	pool1 = MaxPooling2D((2, 2))(conv1)
 	pool1 = Dropout(0.25)(pool1)
@@ -111,25 +112,25 @@ def build_model(input_layer, start_neurons):
 	convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
 	convm = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(convm)
 
-	deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="valid")(convm)
+	deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="same")(convm)
 	uconv4 = concatenate([deconv4, conv4])
 	uconv4 = Dropout(0.5)(uconv4)
 	uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
 	uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
 
-	deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="valid")(uconv4)
+	deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="same")(uconv4)
 	uconv3 = concatenate([deconv3, conv3])
 	uconv3 = Dropout(0.5)(uconv3)
 	uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
 	uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
 
-	deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="valid")(uconv3)
+	deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
 	uconv2 = concatenate([deconv2, conv2])
 	uconv2 = Dropout(0.5)(uconv2)
 	uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
 	uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
 
-	deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="valid")(uconv2)
+	deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
 	uconv1 = concatenate([deconv1, conv1])
 	uconv1 = Dropout(0.5)(uconv1)
 	uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
@@ -137,9 +138,11 @@ def build_model(input_layer, start_neurons):
 
 	output_layer = Conv2D(1, (1, 1), padding="same", activation="sigmoid")(uconv1)
 
-	return output_layer
+	model = tf.keras.Model(input_layer, output_layer)
+
+	return model
 
 
 input_shape = Input((300, 360, 1))
-output = build_model(input_shape, 16)
-output.summary()
+dijon = build_model(input_shape, 16)
+dijon.summary()
