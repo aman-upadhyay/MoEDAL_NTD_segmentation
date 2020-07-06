@@ -1,2 +1,2 @@
 # dijon
-Main repository wgere all the codes from MoEDAL internship are tracked.
+Main repository where all the codes from MoEDAL internship are tracked.
