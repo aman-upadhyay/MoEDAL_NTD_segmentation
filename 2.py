@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
 import numpy as np
 import matplotlib.pyplot as plt
-# from IPython.display import clear_output
+from IPython.display import clear_output
 import os
 from PIL import Image
 from tqdm import tqdm
@@ -37,20 +37,20 @@ for filename in tqdm(clean_dir_filename):
 	i += 1
 	b = filename.replace('c', 'b')
 	d = filename.replace('c', 'd')
-	if i < len(filename) * 0.8:
+	if i < len(clean_dir_filename) * 0.8:
 		image_c = Image.open(os.path.join(clean_dir, filename))
 		image_b = Image.open(os.path.join(binary_dir, b))
 		image_d = Image.open(os.path.join(dirty_dir, d))
-		clean_array_80.append(np.asarray(image_c))
-		binary_array_80.append(np.asarray(image_b)[:, :, 0])
-		dirty_array_80.append(np.asarray(image_d))
+		clean_array_80.append(np.asarray(image_c).reshape(300, 360, 1))
+		binary_array_80.append(np.asarray(image_b)[:, :, 0].reshape(300, 360, 1))
+		dirty_array_80.append(np.asarray(image_d).reshape(300, 360, 1))
 	else:
 		image_c = Image.open(os.path.join(clean_dir, filename))
 		image_b = Image.open(os.path.join(binary_dir, b))
 		image_d = Image.open(os.path.join(dirty_dir, d))
-		clean_array_20.append(np.asarray(image_c))
-		binary_array_20.append(np.asarray(image_b)[:, :, 0])
-		dirty_array_20.append(np.asarray(image_d))
+		clean_array_20.append(np.asarray(image_c).reshape(300, 360, 1))
+		binary_array_20.append(np.asarray(image_b)[:, :, 0].reshape(300, 360, 1))
+		dirty_array_20.append(np.asarray(image_d).reshape(300, 360, 1))
 # todo add 1 channel if required
 
 clean_array_80 = np.array(clean_array_80) / 255
@@ -81,7 +81,7 @@ def display(display_list):
 	for count in range(len(display_list)):
 		plt.subplot(1, len(display_list), count + 1)
 		plt.title(title[count])
-		plt.imshow(tf.keras.preprocessing.image.array_to_img(display_list[count]))
+		plt.imshow(tf.keras.preprocessing.image.array_to_img(display_list[count]), cmap="gray")
 		plt.axis('off')
 	plt.show()
 
@@ -146,3 +146,33 @@ def build_model(input_layer, start_neurons):
 input_shape = Input((300, 360, 1))
 dijon = build_model(input_shape, 16)
 dijon.summary()
+
+dijon.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+
+def create_mask(pred_mask):
+	pred_mask = tf.argmax(pred_mask, axis=-1)
+	pred_mask = pred_mask[..., tf.newaxis]
+	return pred_mask[0]
+
+
+def show_prediction(dataset, top):
+	for image, mask in dataset.take(top):
+		prediction = dijon.predict(image)
+		display([image[0], mask[0, create_mask(prediction)]])
+
+
+class DisplayCallback(tf.keras.callbacks.Callback):
+	def on_epoch_end(self, epoch, logs=None):
+		clear_output(wait=True)
+		show_prediction()
+		print('\nSample Prediction after epoch {}\n'.format(epoch + 1))
+
+
+EPOCHS = 10
+dijon_history = dijon.fit(train_dataset_c, epochs=EPOCHS,
+                          steps_per_epoch=STEPS_PER_EPOCH,
+                          validation_data=test_dataset_c,
+                          callbacks=[DisplayCallback()])
