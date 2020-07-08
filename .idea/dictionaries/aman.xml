@@ -3,9 +3,11 @@
     <words>
       <w>conv</w>
       <w>convm</w>
+      <w>crossentropy</w>
       <w>deconv</w>
       <w>relu</w>
       <w>uconv</w>
+      <w>zahlen</w>
     </words>
   </dictionary>
 </component>

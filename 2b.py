@@ -30,23 +30,11 @@ def display(display_list):
 	plt.show()
 
 
-def create_mask(pred_mask):
-	pred_mask = tf.argmax(pred_mask, axis=-1)
-	pred_mask = pred_mask[..., tf.newaxis]
-	return pred_mask[0]
-
-
 def show_prediction(dataset, top=1):
-	for image, mask in dataset.take(top):
+	for image, mask in dataset:
 		prediction = dijon.predict(image)
-		display([image[0], mask[0], create_mask(prediction)])
-
-
-class DisplayCallback(tf.keras.callbacks.Callback):
-	def on_epoch_end(self, epoch, logs=None):
-		clear_output(wait=True)
-		show_prediction(train_dataset_b)
-		print('\nSample Prediction after epoch {}\n'.format(epoch + 1))
+		for zahlen in range(top):
+			display([image[zahlen], mask[zahlen], prediction[zahlen]])
 
 
 binary_array_80 = list()
@@ -141,17 +129,16 @@ def build_model(input_layer, layer_factor):
 
 
 input_shape = Input((304, 368, 1))
-dijon = build_model(input_shape, 16)
+dijon = build_model(input_shape, 32)
 dijon.summary()
 
 dijon.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              loss="binary_crossentropy",
               metrics=['accuracy'])
 
 TRAIN_LENGTH = dirty_array_80.shape[0]
-BATCH_SIZE = 16
-EPOCHS = 10
-STEPS_PER_EPOCH = TRAIN_LENGTH // (BATCH_SIZE * EPOCHS)
+BATCH_SIZE = 32
+EPOCHS = 20
 
 train_dataset_b = tf.data.Dataset.from_tensor_slices((dirty_array_80, binary_array_80))
 test_dataset_b = tf.data.Dataset.from_tensor_slices((dirty_array_20, binary_array_20))
@@ -159,9 +146,8 @@ train_dataset_b = train_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
 test_dataset_b = test_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
 
 dijon_history = dijon.fit(train_dataset_b, epochs=EPOCHS,
-                          steps_per_epoch=STEPS_PER_EPOCH,
                           validation_data=test_dataset_b,
-                          callbacks=[DisplayCallback()],
+                          callbacks=tf.keras.callbacks.Callback(),
                           verbose=2)
 
 loss = dijon_history.history['loss']
@@ -175,7 +161,7 @@ plt.plot(epochs, val_loss, 'b', label='Validation loss')
 plt.title('dijon:Training and Validation Loss')
 plt.xlabel('Epoch')
 plt.ylabel('Loss Value')
-plt.ylim([0, 1])
+plt.ylim([0, 0.1])
 plt.legend()
 plt.show()
 
