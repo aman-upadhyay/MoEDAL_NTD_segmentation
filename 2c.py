@@ -2,7 +2,6 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
 import numpy as np
 import matplotlib.pyplot as plt
-from IPython.display import clear_output
 import os
 from PIL import Image
 from tqdm import tqdm
