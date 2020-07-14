@@ -5,6 +5,7 @@
       <w>convm</w>
       <w>crossentropy</w>
       <w>deconv</w>
+      <w>kyel</w>
       <w>relu</w>
       <w>uconv</w>
       <w>zahlen</w>

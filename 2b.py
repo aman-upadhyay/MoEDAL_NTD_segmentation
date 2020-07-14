@@ -75,12 +75,12 @@ def build_model(input_layer, layer_factor):
 	conv1 = Conv2D(layer_factor * 1, (3, 3), activation="relu", padding="same")(input_layer)
 	conv1 = Conv2D(layer_factor * 1, (3, 3), activation="relu", padding="same")(conv1)
 	pool1 = MaxPooling2D((2, 2))(conv1)
-	pool1 = Dropout(0.25)(pool1)
+	#pool1 = Dropout(0.25)(pool1)
 
 	conv2 = Conv2D(layer_factor * 2, (3, 3), activation="relu", padding="same")(pool1)
 	conv2 = Conv2D(layer_factor * 2, (3, 3), activation="relu", padding="same")(conv2)
 	pool2 = MaxPooling2D((2, 2))(conv2)
-	pool2 = Dropout(0.5)(pool2)
+	#pool2 = Dropout(0.5)(pool2)
 
 	conv3 = Conv2D(layer_factor * 4, (3, 3), activation="relu", padding="same")(pool2)
 	conv3 = Conv2D(layer_factor * 4, (3, 3), activation="relu", padding="same")(conv3)
@@ -110,13 +110,13 @@ def build_model(input_layer, layer_factor):
 
 	deconv2 = Conv2DTranspose(layer_factor * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
 	uconv2 = concatenate([deconv2, conv2])
-	uconv2 = Dropout(0.5)(uconv2)
+	#uconv2 = Dropout(0.5)(uconv2)
 	uconv2 = Conv2D(layer_factor * 2, (3, 3), activation="relu", padding="same")(uconv2)
 	uconv2 = Conv2D(layer_factor * 2, (3, 3), activation="relu", padding="same")(uconv2)
 
 	deconv1 = Conv2DTranspose(layer_factor * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
 	uconv1 = concatenate([deconv1, conv1])
-	uconv1 = Dropout(0.5)(uconv1)
+	#uconv1 = Dropout(0.5)(uconv1)
 	uconv1 = Conv2D(layer_factor * 1, (3, 3), activation="relu", padding="same")(uconv1)
 	uconv1 = Conv2D(layer_factor * 1, (3, 3), activation="relu", padding="same")(uconv1)
 
