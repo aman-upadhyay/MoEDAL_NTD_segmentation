@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/dijon.iml" filepath="$PROJECT_DIR$/.idea/dijon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/MoEDAL_NTD_segmentation.iml" filepath="$PROJECT_DIR$/.idea/MoEDAL_NTD_segmentation.iml" />
     </modules>
   </component>
 </project>
