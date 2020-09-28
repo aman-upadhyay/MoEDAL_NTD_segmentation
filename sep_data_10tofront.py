@@ -28,9 +28,9 @@ def display(display_list):
 
 def show_prediction(dataset, top=1):
 	for image, mask in dataset:
-		prediction = dijon.predict(image)
+		prediction = milos.predict(image)
 		for zahlen in range(top):
-			display([image[zahlen], mask[zahlen], prediction[zahlen]])
+			display([tf.slice(image[zahlen],[0,0,8],[320,384,1]), tf.reshape(mask[zahlen],[320,384,1]), prediction[zahlen]])
 
 
 dirty_files = np.load("calibration_data/exposed_foil", allow_pickle=True)
@@ -53,27 +53,27 @@ def build_model(input_layer, start_neurons):
 	conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(input_layer)
 	conv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(conv1)
 	pool1 = MaxPooling2D((2, 2))(conv1)
-	# pool1 = Dropout(0.25)(pool1)
+	pool1 = Dropout(0.25)(pool1)
 
 	conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(pool1)
 	conv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(conv2)
 	pool2 = MaxPooling2D((2, 2))(conv2)
-	# pool2 = Dropout(0.5)(pool2)
+	pool2 = Dropout(0.5)(pool2)
 
 	conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(pool2)
 	conv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(conv3)
 	pool3 = MaxPooling2D((2, 2))(conv3)
-	# pool3 = Dropout(0.5)(pool3)
+	pool3 = Dropout(0.5)(pool3)
 
 	conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(pool3)
 	conv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(conv4)
 	pool4 = MaxPooling2D((2, 2))(conv4)
-	# pool4 = Dropout(0.5)(pool4)
+	pool4 = Dropout(0.5)(pool4)
 
 	conv5 = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(pool4)
 	conv5 = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(conv5)
 	pool5 = MaxPooling2D((2, 2))(conv5)
-	# pool5 = Dropout(0.5)(pool5)
+	pool5 = Dropout(0.5)(pool5)
 
 	# Middle
 	convm = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(pool5)
@@ -81,31 +81,31 @@ def build_model(input_layer, start_neurons):
 
 	deconv5 = Conv2DTranspose(start_neurons * 16, (3, 3), strides=(2, 2), padding="same")(convm)
 	uconv5 = concatenate([deconv5, conv5])
-	# uconv5 = Dropout(0.5)(uconv5)
+	uconv5 = Dropout(0.5)(uconv5)
 	uconv5 = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(uconv5)
 	uconv5 = Conv2D(start_neurons * 16, (3, 3), activation="relu", padding="same")(uconv5)
 
 	deconv4 = Conv2DTranspose(start_neurons * 8, (3, 3), strides=(2, 2), padding="same")(uconv5)
 	uconv4 = concatenate([deconv4, conv4])
-	# uconv4 = Dropout(0.5)(uconv4)
+	uconv4 = Dropout(0.5)(uconv4)
 	uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
 	uconv4 = Conv2D(start_neurons * 8, (3, 3), activation="relu", padding="same")(uconv4)
 
 	deconv3 = Conv2DTranspose(start_neurons * 4, (3, 3), strides=(2, 2), padding="same")(uconv4)
 	uconv3 = concatenate([deconv3, conv3])
-	# uconv3 = Dropout(0.5)(uconv3)
+	uconv3 = Dropout(0.5)(uconv3)
 	uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
 	uconv3 = Conv2D(start_neurons * 4, (3, 3), activation="relu", padding="same")(uconv3)
 
 	deconv2 = Conv2DTranspose(start_neurons * 2, (3, 3), strides=(2, 2), padding="same")(uconv3)
 	uconv2 = concatenate([deconv2, conv2])
-	# uconv2 = Dropout(0.5)(uconv2)
+	uconv2 = Dropout(0.5)(uconv2)
 	uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
 	uconv2 = Conv2D(start_neurons * 2, (3, 3), activation="relu", padding="same")(uconv2)
 
 	deconv1 = Conv2DTranspose(start_neurons * 1, (3, 3), strides=(2, 2), padding="same")(uconv2)
 	uconv1 = concatenate([deconv1, conv1])
-	# uconv1 = Dropout(0.5)(uconv1)
+	uconv1 = Dropout(0.5)(uconv1)
 	uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
 	uconv1 = Conv2D(start_neurons * 1, (3, 3), activation="relu", padding="same")(uconv1)
 
@@ -117,9 +117,44 @@ def build_model(input_layer, start_neurons):
 
 
 input_shape = Input((320, 384, 10))
-dijon = build_model(input_shape, 32)
-dijon.summary()
+milos = build_model(input_shape, 32)
+milos.summary()
 
-dijon.compile(optimizer='adam',
+milos.compile(optimizer='adam',
               loss="binary_crossentropy",
               metrics=['accuracy'])
+
+
+TRAIN_LENGTH = training_dirty.shape[0]
+BATCH_SIZE = 16
+EPOCHS = 30
+STEPS_PER_EPOCH = TRAIN_LENGTH // (BATCH_SIZE*EPOCHS)
+
+train_dataset_b = tf.data.Dataset.from_tensor_slices((training_dirty, training_clean[:,:,:,0]))
+test_dataset_b = tf.data.Dataset.from_tensor_slices((test_dirty, test_clean[:,:,:,0]))
+train_dataset_b = train_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
+test_dataset_b = test_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
+
+milos_history = milos.fit(train_dataset_b, epochs=EPOCHS,
+                          validation_data=test_dataset_b,
+                          callbacks=tf.keras.callbacks.Callback(),
+                          verbose=2)
+
+
+loss = milos_history.history['loss']
+val_loss = milos_history.history['val_loss']
+
+epochs = range(EPOCHS)
+
+plt.figure()
+plt.plot(epochs, loss, 'r', label='Training loss')
+plt.plot(epochs, val_loss, 'b', label='Validation loss')
+plt.title('milos:Training and Validation Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss Value')
+plt.ylim([0, 0.03])
+plt.legend()
+plt.show()
+
+show_prediction(test_dataset_b, 1)
+
