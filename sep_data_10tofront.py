@@ -2,9 +2,6 @@ import tensorflow as tf
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
 import numpy as np
 import matplotlib.pyplot as plt
-import os
-from PIL import Image
-from tqdm import tqdm
 
 ############################################################################################
 
@@ -35,20 +32,21 @@ def show_prediction(dataset, top=1):
 		for zahlen in range(top):
 			display([image[zahlen], mask[zahlen], prediction[zahlen]])
 
-dirty_files = np.load("calibration_data/exposed_foil",allow_pickle =True)
+
+dirty_files = np.load("calibration_data/exposed_foil", allow_pickle=True)
 clean_files = np.load("calibration_data/binary_clean.npy", allow_pickle=True)
 dirty_files = np.array(dirty_files)
 clean_files = np.array(clean_files)
 
 indices = np.random.permutation(dirty_files.shape[0])
 training_idx, test_idx = indices[:80], indices[80:]
-training_clean, test_clean = clean_files[training_idx,:,:,:], clean_files[test_idx,:,:,:]
-training_dirty, test_dirty = dirty_files[training_idx,:,:,:], dirty_files[test_idx,:,:,:]
+training_clean, test_clean = clean_files[training_idx, :, :, :], clean_files[test_idx, :, :, :]
+training_dirty, test_dirty = dirty_files[training_idx, :, :, :], dirty_files[test_idx, :, :, :]
 
-training_clean = np.pad(training_clean,((0,0),(10,10),(12,12),(0,0)),'constant',constant_values=1)
-training_dirty = np.pad(training_dirty,((0,0),(10,10),(12,12),(0,0)),'constant',constant_values=1)
-test_clean = np.pad(test_clean,((0,0),(10,10),(12,12),(0,0)),'constant',constant_values=1)
-test_dirty = np.pad(test_dirty,((0,0),(10,10),(12,12),(0,0)),'constant',constant_values=1)
+training_clean = np.pad(training_clean, ((0, 0), (10, 10), (12, 12), (0, 0)), 'constant', constant_values=1)
+training_dirty = np.pad(training_dirty, ((0, 0), (10, 10), (12, 12), (0, 0)), 'constant', constant_values=1)
+test_clean = np.pad(test_clean, ((0, 0), (10, 10), (12, 12), (0, 0)), 'constant', constant_values=1)
+test_dirty = np.pad(test_dirty, ((0, 0), (10, 10), (12, 12), (0, 0)), 'constant', constant_values=1)
 
 
 def build_model(input_layer, start_neurons):
@@ -117,7 +115,8 @@ def build_model(input_layer, start_neurons):
 
 	return model
 
-input_shape = Input((320, 384,10))
+
+input_shape = Input((320, 384, 10))
 dijon = build_model(input_shape, 32)
 dijon.summary()
 
