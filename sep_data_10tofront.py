@@ -30,7 +30,8 @@ def show_prediction(dataset, top=1):
 	for image, mask in dataset:
 		prediction = milos.predict(image)
 		for zahlen in range(top):
-			display([tf.slice(image[zahlen],[0,0,8],[320,384,1]), tf.reshape(mask[zahlen],[320,384,1]), prediction[zahlen]])
+			display([tf.slice(image[zahlen], [0, 0, 8], [320, 384, 1]), tf.reshape(mask[zahlen], [320, 384, 1]),
+			         prediction[zahlen]])
 
 
 dirty_files = np.load("calibration_data/exposed_foil", allow_pickle=True)
@@ -39,7 +40,7 @@ dirty_files = np.array(dirty_files)
 clean_files = np.array(clean_files)
 
 indices = np.random.permutation(dirty_files.shape[0])
-training_idx, test_idx = indices[:80], indices[80:]
+training_idx, test_idx = indices[:198], indices[198:]
 training_clean, test_clean = clean_files[training_idx, :, :, :], clean_files[test_idx, :, :, :]
 training_dirty, test_dirty = dirty_files[training_idx, :, :, :], dirty_files[test_idx, :, :, :]
 
@@ -124,14 +125,13 @@ milos.compile(optimizer='adam',
               loss="binary_crossentropy",
               metrics=['accuracy'])
 
-
 TRAIN_LENGTH = training_dirty.shape[0]
 BATCH_SIZE = 16
 EPOCHS = 30
-STEPS_PER_EPOCH = TRAIN_LENGTH // (BATCH_SIZE*EPOCHS)
+STEPS_PER_EPOCH = TRAIN_LENGTH // (BATCH_SIZE * EPOCHS)
 
-train_dataset_b = tf.data.Dataset.from_tensor_slices((training_dirty, training_clean[:,:,:,0]))
-test_dataset_b = tf.data.Dataset.from_tensor_slices((test_dirty, test_clean[:,:,:,0]))
+train_dataset_b = tf.data.Dataset.from_tensor_slices((training_dirty, training_clean[:, :, :, 0]))
+test_dataset_b = tf.data.Dataset.from_tensor_slices((test_dirty, test_clean[:, :, :, 0]))
 train_dataset_b = train_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
 test_dataset_b = test_dataset_b.shuffle(TRAIN_LENGTH).batch(BATCH_SIZE)
 
@@ -139,7 +139,6 @@ milos_history = milos.fit(train_dataset_b, epochs=EPOCHS,
                           validation_data=test_dataset_b,
                           callbacks=tf.keras.callbacks.Callback(),
                           verbose=2)
-
 
 loss = milos_history.history['loss']
 val_loss = milos_history.history['val_loss']
@@ -157,4 +156,3 @@ plt.legend()
 plt.show()
 
 show_prediction(test_dataset_b, 1)
-
