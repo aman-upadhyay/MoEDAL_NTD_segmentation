@@ -101,32 +101,20 @@ def binary(data, thresh):
     return img_binary
 
 
-def test(cond):
-    if cond==1:
-        true_list = []
-        pred_list = []
+def test():
 
-        clean = np.load("trained_data/backlit_halo_testclean.npy")
-        dirty = np.load("trained_data/backlit_halo_predict.npy")
-        clean = binary(clean, 0.2)
-        dirty = binary(dirty, 0.7)
-        true_list.append(clean[12, :, :, 0])
-        pred_list.append(dirty[12, :, :, 0])
+    true_list = []
+    pred_list = []
 
-        calc_efficiencies(pred_list, true_list)
-    else:
-        true_list = []
-        pred_list = []
+    clean = np.load("trained_data/backlit_halo_testclean.npy")
+    dirty = np.load("trained_data/backlit_halo_predict.npy")
+    clean = binary(clean, 0.2)
+    dirty = binary(dirty, 0.70)
+    for i in range(49):
+        true_list.append(clean[i, :, :, 0])
+        pred_list.append(dirty[i, :, :, 0])
 
-        clean = np.load("trained_data/backlit_halo_testclean.npy")
-        dirty = np.load("trained_data/backlit_halo_predict.npy")
-        clean = binary(clean, 0.2)
-        dirty = binary(dirty, 0.70)
-        for i in range(49):
-            true_list.append(clean[i, :, :, 0])
-            pred_list.append(dirty[i, :, :, 0])
-
-        calc_efficiencies(pred_list, true_list)
+    calc_efficiencies(pred_list, true_list)
 
 
-test(2)
+test()
