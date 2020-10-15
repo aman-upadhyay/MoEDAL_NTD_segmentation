@@ -119,7 +119,8 @@ def build_model(input_layer, layer_factor):
 	conv8 = Conv2D(layer_factor * 1, (3, 3), activation="relu", padding="same")(conv8)
 	conv8 = Conv2D(1, (3, 3), padding="same", activation="relu")(conv8)
 
-	model = tf.keras.Model(input_layer, conv8)
+	output_layer = Conv2D(1, (1, 1), padding="same", activation="sigmoid")(conv8)
+	model = tf.keras.Model(input_layer, output_layer)
 
 	return model
 
